@@ -2,7 +2,44 @@ include(joinpath(@__DIR__, "TimeIntegrationMethods.jl"))
 
 using Printf
 using LinearAlgebra
-using TimeIntegrationMethods
+using .TimeIntegrationMethods
+
+function runModel(
+    dXdt :: Function,
+    X0 :: AbstractArray,
+    steps :: Integer,
+    Δt :: Float64,
+)
+
+
+    println("Record")
+    record = (
+        t = zeros(Float64, steps+1),
+        X = zeros(Float64, steps+1, length(X0)),
+    )
+
+    record.X[1, :] = X0
+    println("Ready to run the model.")
+    for step = 1:steps
+        if mod(step, 100) == 1 || step == steps
+            @printf("Step %d\n", step)
+        end
+
+        X_now = record.X[step, :]
+
+        AX = TimeIntegrationMethod(dXdt, Δt, t, X_now)
+        
+        record.X[step+1, :] = X_now + Δt * AX
+        record.t[step+1] = record.t[step] + Δt
+
+        #x, y, z = record.X[step+1, :]
+        #@printf("[Step = %d] (x, y, z) = (%.2f, %.2f, %.2f)\n", step, x, y, z)
+    end
+
+
+    return record
+
+end
 
 function dXdt_Lorenz(
     t :: Float64,
@@ -45,34 +82,14 @@ t = 0.0
 total_time = 10.0
 steps = Int64(ceil(total_time / Δt))
 
-println("Record")
-record = (
-    t = zeros(Float64, steps+1),
-    X = zeros(Float64, steps+1, length(X0)),
+
+record = runModel(
+    mydXdt,
+    X0,
+    steps,
+    Δt,
 )
 
-
-record.X[1, :] = X0
-
-
-
-println("Ready to run the model.")
-for step = 1:steps
-    if mod(step, 100) == 1 || step == steps
-        @printf("Step %d\n", step)
-    end
-
-    X_now = record.X[step, :]
-
-    AX = TimeIntegrationMethod(mydXdt, Δt, t, X_now)
-    
-    record.X[step+1, :] = X_now + Δt * AX
-    record.t[step+1] = record.t[step] + Δt
-
-    x, y, z = record.X[step+1, :]
-
-    @printf("[Step = %d] (x, y, z) = (%.2f, %.2f, %.2f)\n", step, x, y, z)
-end
 
 
 t = record.t
