@@ -111,14 +111,6 @@ x_obs = X_obs[:, 0]
 y_obs = X_obs[:, 1]
 z_obs = X_obs[:, 2]
 
-
-
-
-
-
-
-
-
 print("Loading matplotlib...")
 import matplotlib
 #if args.no_display:
