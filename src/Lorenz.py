@@ -9,6 +9,7 @@ def runModelEnsemble(
     run_model_func,
     dXdt,
     time_int_method,
+    t0,
     ens_X0,
     steps,
     dt,
@@ -21,7 +22,7 @@ def runModelEnsemble(
     for n in range(ens_X0.shape[0]):
         
         X0 = ens_X0[n, :]
-        _record = run_model_func(dXdt, time_int_method, X0, steps, dt)
+        _record = run_model_func(dXdt, time_int_method, t0, X0, steps, dt)
         full_X.append(_record["X"])
         if t is None:
             t = _record["t"]
@@ -38,9 +39,10 @@ def runModelEnsemble(
 def runModel(
     dXdt,
     time_int_method,
+    t0,
     X0,
     steps,
-    Δt,
+    dt,
     
 ):
 
@@ -50,18 +52,21 @@ def runModel(
         X = np.zeros((steps+1, len(X0)), dtype=np.float32),
     )
 
+    
+    record["t"][0] = t0
     record["X"][0, :] = X0
     #print("Ready to run the model.")
     for step in range(0, steps):
 #        if step % 100 == 0 or step == steps-1:
 #            print("Step %d" % (step+1,))
 
+        t_now = record["t"][step]
         X_now = record["X"][step, :]
 
-        AX = time_int_method(dXdt, Δt, t, X_now)
+        AX = time_int_method(dXdt, dt, t_now, X_now)
         
-        record["X"][step+1, :] = X_now + Δt * AX
-        record["t"][step+1] = record["t"][step] + Δt
+        record["X"][step+1, :] = X_now + dt * AX
+        record["t"][step+1] = record["t"][step] + dt
 
 
     return record
@@ -83,19 +88,6 @@ def dXdt_Lorenz(t, X, p):
     ])
 
     return A
-
-
-def RK2(f, dt, t, X):
-    
-    k1 = f(t, X) @ X
-
-    X_mid = X + dt * k1
-
-    k2 = f(t + dt, X + dt * k1) @ X
-
-    AX = k1 * 0.5 + k2 * 0.5
-
-    return AX
 
 
 # Example

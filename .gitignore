@@ -3,3 +3,4 @@
 *.svg
 *.tmp
 *.nc
+__pycache__/
